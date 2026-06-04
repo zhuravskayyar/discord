@@ -5,9 +5,11 @@ services:
     region: frankfurt
     plan: free
     buildCommand: npm ci && npm run build --workspace server
-    startCommand: npm run start --workspace server
+    startCommand: node server/dist/index.js
     healthCheckPath: /health
     envVars:
+      - key: NODE_VERSION
+        value: 24.14.1
       - key: NODE_ENV
         value: production
       - key: CLIENT_ORIGIN
@@ -31,6 +33,8 @@ services:
     buildCommand: npm ci && npm run build --workspace client
     staticPublishPath: client/dist
     envVars:
+      - key: NODE_VERSION
+        value: 24.14.1
       - key: VITE_API_URL
         value: https://zhuravskayyar-discord-api.onrender.com
       - key: VITE_LIVEKIT_URL

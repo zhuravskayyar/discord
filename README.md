@@ -115,9 +115,10 @@ Backend Web Service:
 ```txt
 Root Directory: оставить пустым
 Build Command: npm ci && npm run build --workspace server
-Start Command: npm run start --workspace server
+Start Command: node server/dist/index.js
 Health Check Path: /health
 Environment:
+  NODE_VERSION=24.14.1
   NODE_ENV=production
   CLIENT_ORIGIN=https://твой-frontend.onrender.com
   DATABASE_URL=строка Render PostgreSQL
@@ -130,6 +131,7 @@ Root Directory: оставить пустым
 Build Command: npm ci && npm run build --workspace client
 Publish Directory: client/dist
 Environment:
+  NODE_VERSION=24.14.1
   VITE_API_URL=https://твой-backend.onrender.com
 ```
 
@@ -143,6 +145,19 @@ Copy Internal Database URL или External Database URL в DATABASE_URL backend-
 Для стабильного realtime-чата на нескольких backend-инстансах добавь Render Key Value / Redis-compatible сервис и укажи `REDIS_URL`.
 
 Для production лучше перевести backend с `free` на `starter`, потому что free-инстансы могут засыпать после простоя, а WebSocket-соединения при этом будут обрываться.
+
+Если backend deploy failed:
+
+1. Открой `zhuravskayyar-discord-api` в Render.
+2. Перейди во вкладку `Logs`.
+3. Проверь, что build дошел до `npm run build --workspace server`.
+4. Проверь, что после старта есть строка:
+
+```txt
+API запущен на http://localhost:<PORT>
+```
+
+5. Если ошибка связана с `REDIS_URL` или `LIVEKIT_*`, временно оставь эти переменные пустыми и нажми `Manual Deploy`.
 
 ## Команды
 
