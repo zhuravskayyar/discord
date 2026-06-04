@@ -200,20 +200,27 @@ const io = new Server(httpServer, {
     credentials: true
   }
 });
+let redisAdapterEnabled = false;
 
 async function configureRedisAdapter() {
   if (!process.env.REDIS_URL) {
     return;
   }
 
-  const pubClient = createClient({ url: process.env.REDIS_URL });
-  const subClient = pubClient.duplicate();
+  try {
+    const pubClient = createClient({ url: process.env.REDIS_URL });
+    const subClient = pubClient.duplicate();
 
-  pubClient.on("error", (error) => console.error("Redis pub error", error));
-  subClient.on("error", (error) => console.error("Redis sub error", error));
+    pubClient.on("error", (error) => console.error("Redis pub error", error));
+    subClient.on("error", (error) => console.error("Redis sub error", error));
 
-  await Promise.all([pubClient.connect(), subClient.connect()]);
-  io.adapter(createAdapter(pubClient, subClient));
+    await Promise.all([pubClient.connect(), subClient.connect()]);
+    io.adapter(createAdapter(pubClient, subClient));
+    redisAdapterEnabled = true;
+    console.log("Redis adapter включен");
+  } catch (error) {
+    console.warn("Redis adapter отключен: не удалось подключиться", error);
+  }
 }
 
 function serializeBootstrap(currentUserId = "u_aria") {
@@ -261,7 +268,7 @@ app.get("/health", (_request, response) => {
   response.json({
     ok: true,
     realtime: "socket.io",
-    redis: Boolean(process.env.REDIS_URL),
+    redis: redisAdapterEnabled,
     livekit: Boolean(
       process.env.LIVEKIT_URL &&
         process.env.LIVEKIT_API_KEY &&
@@ -443,13 +450,10 @@ io.on("connection", (socket) => {
   });
 });
 
-configureRedisAdapter()
-  .then(() => {
-    httpServer.listen(port, "0.0.0.0", () => {
-      console.log(`API запущен на http://localhost:${port}`);
-    });
-  })
-  .catch((error) => {
-    console.error("Не удалось запустить realtime adapter", error);
-    process.exit(1);
-  });
+httpServer.listen(port, "0.0.0.0", () => {
+  console.log(`API запущен на http://localhost:${port}`);
+});
+
+configureRedisAdapter().catch((error) => {
+  console.warn("Redis adapter отключен: ошибка настройки", error);
+});
