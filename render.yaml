@@ -1,0 +1,48 @@
+services:
+  - type: web
+    name: discord-starter-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CLIENT_ORIGIN
+        fromService:
+          type: web
+          name: discord-starter-web
+          property: host
+      - key: DATABASE_URL
+        fromDatabase:
+          name: discord-starter-db
+          property: connectionString
+      - key: REDIS_URL
+        sync: false
+      - key: LIVEKIT_URL
+        sync: false
+      - key: LIVEKIT_API_KEY
+        sync: false
+      - key: LIVEKIT_API_SECRET
+        sync: false
+
+  - type: web
+    name: discord-starter-web
+    runtime: static
+    rootDir: client
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: discord-starter-api
+          property: host
+      - key: VITE_LIVEKIT_URL
+        sync: false
+
+databases:
+  - name: discord-starter-db
+    databaseName: discord_starter
+    user: discord_starter
